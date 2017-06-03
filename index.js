@@ -1,25 +1,43 @@
-let Gpio, led1, led2, led3, button;
+let Gpio, leds, button;
 Gpio = require('onoff').Gpio;
 
 let init = () => {
-  led1 = new Gpio(2, 'out');
-  led2 = new Gpio(4, 'out');
-  led3 = new Gpio(22, 'out');
+  leds = [
+    new Gpio(2, 'out'),
+    new Gpio(4, 'out'),
+    new Gpio(22, 'out')];
 
   button = new Gpio(17, 'in', 'both');
 
-  led1.writeSync(0);
-  led2.writeSync(0);
-  led3.writeSync(0);
+  for (let i = 0; i < leds.length; i++) {
+    leds[i].writeSync(0);
+  }
+
+  process.on('SIGINT', finish);
 }
 
+let finish = () => {
+  console.log('before finish');
 
+  for (let i = 0; i < leds.length; i++) {
+    leds[i].writeSync(0);
+    leds[i].unexport();
+  }
+
+  button.unexport();
+
+  process.exit();
+}
 
 
 let main = () => {
   init();
+
+  let i = 0;
+
   button.watch((err, val) => {
-    led1.writeSync(val);
+    leds[i%3].writeSync(val);
+    i++;
   });
 }
 
